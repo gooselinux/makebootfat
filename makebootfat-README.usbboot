@@ -1,0 +1,48 @@
+1. Extract contents of the image */images/diskboot.img (from an appropriate
+distribution) to a directory, for example /tmp/imagedir/ .
+
+2. Note, that ldlinux.sys file from diskboot.img is unusable for makebootfat
+(because it is already prepared some way). You have to use
+either ldlinux.bss and ldlinux.sys from /usr/share/makebootfat directory,
+or obtain newer ones from the correspond "syslinux" tarball
+(at ftp://ftp.kernel.org/pub/linux/utils/boot/syslinux[/Old] ). The last way
+is strongly recommended, as makebootfat's ones could be old enough
+for some modern diskboot.img requirements...
+
+3. Create a work directory, say /tmp/work, and copy to it "mbrfat.bin"
+(from /usr/share/makebootfat) and "ldlinux.bss" with "ldlinux.sys"
+(either from /usr/share/makebootfat or newer ones derived from
+the downloaded syslinux tarball).
+
+4. Remove old "ldlinux.sys" from /tmp/imagedir
+
+5. Generate an image file of appropriate size, at least the size of diskboot.img
+(see above), but better some more (16 Mb could be useful)
+   dd bs=1M count=16 </dev/zero >/tmp/work/image.img
+
+6. Go to your /tmp/work and run the makebootfat, for example:
+
+   /usr/bin/makebootfat -o image.img -b ldlinux.bss -m mbrfat.bin \
+	-F -c ldlinux.sys -Y /tmp/imagedir/
+
+   You can use also '-Z' to handle USB-ZIP format, but this way it seems that
+   your image will be suitable for "flash for boot only", not for general
+   purpose flash with some boot stuff at the first partition...
+
+   See makebootfat(1) for additional options etc.
+
+   Note: if you specify real disk (i.e., /dev/sdX instead of the image file),
+   the whole disk area will be filled by a single fat filesystem...
+
+7. Copy the created image to a target media:
+   dd bs=512 </tmp/image.img >/dev/sdX
+
+8. Add another partitions (if needed) onto the free space left on the media
+   fdisk /dev/sdX
+
+   If the result flash cannot boot for some reason, try to re-set
+   the first partition as bootable (type 'a' twice to off and on back
+   the boot flag on it). You can also re-type 'c' (DOS compatibility) as well.
+
+Thats all.
+
